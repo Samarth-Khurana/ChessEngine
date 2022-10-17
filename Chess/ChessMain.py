@@ -1,4 +1,3 @@
-from typing import Tuple
 
 import pygame as p
 from Chess import ChessEngine
@@ -23,7 +22,9 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color('white'))
     gs = ChessEngine.GameState()
-
+    possible_moves = gs.allPossibleMoves()
+    # print(possible_moves)
+    move_made = False
     load_images()
     running = True
     sq_selected: tuple = ()
@@ -49,10 +50,18 @@ def main():
                         move.append(sq_selected)
                 if len(move) == 2:
                     mv = ChessEngine.movePieces(gs.board, move[0], move[1])
-                    gs.make_move(mv)
-                    sq_selected = ()
-                    move = []
 
+                    # print(possible_moves)
+                    if mv in possible_moves:
+                        gs.make_move(mv)
+                        move_made = True
+                        sq_selected = ()
+                        move = []
+
+            if move_made:
+                possible_moves = gs.allPossibleMoves()
+                print(possible_moves)
+                move_made = False
         draw_game_state(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()
