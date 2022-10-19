@@ -22,8 +22,9 @@ def main():
     clock = p.time.Clock()
     screen.fill(p.Color('white'))
     gs = ChessEngine.GameState()
-    possible_moves = gs.allPossibleMoves()
-    # print(possible_moves)
+    valid_moves = gs.allValidMoves()
+    for i in valid_moves:
+        print(i.moveID)
     move_made = False
     load_images()
     running = True
@@ -52,16 +53,18 @@ def main():
                     mv = ChessEngine.movePieces(gs.board, move[0], move[1])
 
                     # print(possible_moves)
-                    if mv in possible_moves:
+                    if mv in valid_moves:
                         gs.make_move(mv)
                         move_made = True
                         sq_selected = ()
                         move = []
+                    else:
+                        move = [sq_selected]
 
-            if move_made:
-                possible_moves = gs.allPossibleMoves()
-                print(possible_moves)
-                move_made = False
+        if move_made:
+            valid_moves = gs.allValidMoves()
+            # print(possible_moves)
+            move_made = False
         draw_game_state(screen, gs)
         clock.tick(MAX_FPS)
         p.display.flip()

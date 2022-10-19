@@ -12,15 +12,69 @@ class GameState:
         ]
         self.whiteToMove = True
         self.moveLog = []
+        self.whiteKingLocation = (0, 4)
+        self.blackKingLocation = (7, 4)
+        self.checkMate = False
+        self.staleMate = False
 
     def make_move(self, move):
+        self.board[move.endRow][move.endCol] = move.piece_captured
         self.board[move.startRow][move.startCol] = "--"
         self.board[move.endRow][move.endCol] = move.piece_moved
         self.moveLog.append(move)
         self.whiteToMove = not self.whiteToMove
+        if move.piece_moved == "wK":
+            self.whiteKingLocation = (move.endRow, move.endCol)
+        elif move.piece_moved == "bK":
+            self.blackKingLocation = (move.endRow, move.endCol)
+
+    def undoMove(self):
+        if len(self.moveLog) != 0:
+            move = self.moveLog.pop()
+            self.board[move.startRow][move.startCol] = move.piece_moved
+            self.board[move.endRow][move.endCol] = move.piece_captured
+            self.whiteToMove = not self.whiteToMove
+            if move.piece_moved == "wK":
+                self.whiteKingLocation = (move.startRow, move.startCol)
+            elif move.piece_moved == "bK":
+                self.blackKingLocation = (move.startRow, move.startCol)
+            self.checkMate = False
+            self.staleMate = False
 
     def allValidMoves(self):
-        self.allPossibleMoves()
+        moves = self.allPossibleMoves()
+
+        for i in range(len(moves) - 1, -1, -1):
+            # print(moves[i].moveID)
+            self.make_move(moves[i])
+            self.whiteToMove = not self.whiteToMove
+            if self.inCheck():
+                moves.remove(moves[i])
+            self.whiteToMove = not self.whiteToMove
+            self.undoMove()
+
+        if len(moves) == 0:
+            if self.inCheck():
+                self.checkMate = True
+            else:
+                self.staleMate = True
+
+        return moves
+
+    def inCheck(self):
+        if self.whiteToMove:
+            return self.squareUnderAttack(self.whiteKingLocation[0], self.whiteKingLocation[1])
+        else:
+            return self.squareUnderAttack(self.blackKingLocation[0], self.blackKingLocation[1])
+
+    def squareUnderAttack(self, r, c):
+        self.whiteToMove = not self.whiteToMove
+        opp_moves = self.allPossibleMoves()
+        self.whiteToMove = not self.whiteToMove
+        for m in opp_moves:
+            if m.endRow == r and m.endCol == c:
+                return True
+        return False
 
     def allPossibleMoves(self):
         moves = []
@@ -65,35 +119,90 @@ class GameState:
                 moves.append(movePieces(self.board, (r, c), (r - 1, c + 1)))
 
     def getRookMoves(self, r, c, moves):
-        pass
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        enemy_piece = "w"
+        if self.whiteToMove:
+            enemy_piece = "b"
+        for d in directions:
+            for i in range(1, 8):
+                new_r = r + d[0] * i
+                new_c = c + d[1] * i
+                if 0 <= new_r <= 7 and 0 <= new_c <= 7:
+                    if self.board[new_r][new_c] == "--":
+                        moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
+                    elif self.board[new_r][new_c][0] == enemy_piece:
+                        moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
+                        break
+                    else:
+                        break
+                else:
+                    break
 
     def getKnightMoves(self, r, c, moves):
-        pass
+        directions = [(2, 1), (2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2), (-2, 1), (-2, -1)]
+        enemy_piece = 'w'
+        if self.whiteToMove:
+            enemy_piece = 'b'
+        for d in directions:
+            new_r = r + d[0]
+            new_c = c + d[1]
+            if 0 <= new_r <= 7 and 0 <= new_c <= 7 and (self.board[new_r][new_c] == "--" or enemy_piece ==
+                                                        self.board[new_r][new_c][0]):
+                moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
 
     def getBishopMoves(self, r, c, moves):
-        pass
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        enemy_piece = "w"
+        if self.whiteToMove:
+            enemy_piece = "b"
+        for d in directions:
+            for i in range(1, 8):
+                new_r = r + d[0] * i
+                new_c = c + d[1] * i
+                if 0 <= new_r <= 7 and 0 <= new_c <= 7:
+                    if self.board[new_r][new_c] == "--":
+                        moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
+                    elif self.board[new_r][new_c][0] == enemy_piece:
+                        moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
+                        break
+                    else:
+                        break
+                else:
+                    break
 
     def getQueenMoves(self, r, c, moves):
-        pass
+        self.getRookMoves(r, c, moves)
+        self.getBishopMoves(r, c, moves)
 
     def getKingMoves(self, r, c, moves):
-        pass
+        directions = [(1, 1), (1, 0), (1, -1), (0, -1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+
+        if self.whiteToMove:
+            enemy_piece = 'w'
+        else:
+            enemy_piece = 'b'
+        for d in directions:
+            new_r = r + d[0]
+            new_c = c + d[1]
+            if 0 <= new_r <= 7 and 0 <= new_c <= 7 and (self.board[new_r][new_c] == "--" or enemy_piece ==
+                                                        self.board[new_r][new_c][0]):
+                moves.append(movePieces(self.board, (r, c), (new_r, new_c)))
 
 
 class movePieces:
-    def __init__(self, board, sqstart, sqend):
+    def __init__(self, board, sq_start, sq_end):
         """
 
         :type board: object
         """
-        self.startRow = sqstart[0]
-        self.startCol = sqstart[1]
-        self.endRow = sqend[0]
-        self.endCol = sqend[1]
-        self.piece_moved = board[sqstart[0]][sqstart[1]]
-        self.piece_captured = board[sqend[0]][sqend[1]]
+        self.startRow = sq_start[0]
+        self.startCol = sq_start[1]
+        self.endRow = sq_end[0]
+        self.endCol = sq_end[1]
+        self.piece_moved = board[self.startRow][self.startCol]
+        self.piece_captured = board[self.endRow][self.endCol]
         self.moveID = self.startRow * 1000 + self.startCol * 100 + self.endRow * 10 + self.endCol
-        print(self.moveID)
+        # print(self.moveID)
 
     def __eq__(self, other):
         if isinstance(other, movePieces):
