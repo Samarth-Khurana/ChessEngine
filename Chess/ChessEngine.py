@@ -178,9 +178,9 @@ class GameState:
         directions = [(1, 1), (1, 0), (1, -1), (0, -1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
 
         if self.whiteToMove:
-            enemy_piece = 'w'
-        else:
             enemy_piece = 'b'
+        else:
+            enemy_piece = 'w'
         for d in directions:
             new_r = r + d[0]
             new_c = c + d[1]

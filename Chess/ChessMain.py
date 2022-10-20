@@ -1,4 +1,3 @@
-
 import pygame as p
 from Chess import ChessEngine
 
@@ -23,18 +22,19 @@ def main():
     screen.fill(p.Color('white'))
     gs = ChessEngine.GameState()
     valid_moves = gs.allValidMoves()
-    for i in valid_moves:
-        print(i.moveID)
+
     move_made = False
     load_images()
     running = True
     sq_selected: tuple = ()
     move = []
     while running:
+
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
+
                 location = p.mouse.get_pos()
                 col = location[0] // SQ_SIZE
                 row = location[1] // SQ_SIZE
@@ -58,25 +58,62 @@ def main():
                         move_made = True
                         sq_selected = ()
                         move = []
+                        # print(gs.checkMate)
                     else:
                         move = [sq_selected]
 
         if move_made:
             valid_moves = gs.allValidMoves()
+
             # print(possible_moves)
             move_made = False
-        draw_game_state(screen, gs)
+        draw_game_state(screen, gs, valid_moves, sq_selected)
+        if gs.checkMate:
+            if gs.whiteToMove:
+                putText(screen, "Black wins by CheckMate")
+            else:
+                putText(screen, "White wins by CheckMate")
+        elif gs.staleMate:
+            putText(screen, "Game is draw by stalemate")
         clock.tick(MAX_FPS)
         p.display.flip()
 
 
-def draw_game_state(screen, gs):
+def putText(screen, s):
+    font = p.font.SysFont("Helvetica", 32, True)
+    text = font.render(s, 0, p.Color("Green"))
+    screen.blit(text, p.Rect(0, 0, WIDTH, HEIGHT, ).move(WIDTH / 2 - text.get_width() / 2,
+                                                         HEIGHT / 2 - text.get_height() / 2))
+
+
+def highlight(screen, gs, valid_moves, sq_selected):
+    if sq_selected != ():
+        r, c = sq_selected
+        if gs.whiteToMove:
+            ally = "w"
+        else:
+            ally = "b"
+        if gs.board[r][c][0] == ally:
+            # print("ewfewj")
+            s = p.Surface((SQ_SIZE, SQ_SIZE))
+            s.set_alpha(100)
+            s.fill(p.Color('blue'))
+            screen.blit(s, (c * SQ_SIZE, r * SQ_SIZE))
+            s.fill(p.Color('yellow'))
+            for move in valid_moves:
+                if move.startRow == r and move.startCol == c:
+                    # print(move.endRow, move.endCol)
+                    screen.blit(s, (move.endCol * SQ_SIZE, move.endRow * SQ_SIZE))
+
+
+def draw_game_state(screen, gs, valid_moves, sq_selected):
     draw_chess_board(screen)
+    highlight(screen, gs, valid_moves, sq_selected)
     draw_pieces(screen, gs.board)
 
 
 def draw_chess_board(screen):
-    colours = [p.Color("white"), p.Color("purple")]
+    colours = [p.Color("white"), p.Color("gray")]
     for r in range(DIMENSIONS):
         for c in range(DIMENSIONS):
             col = colours[(r + c) % 2]
