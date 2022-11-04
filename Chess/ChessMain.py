@@ -1,6 +1,6 @@
 import pygame as p
 from Chess import ChessEngine
-
+from Chess import ChessAI
 p.init()
 WIDTH = HEIGHT = 512
 DIMENSIONS = 8
@@ -28,40 +28,47 @@ def main():
     running = True
     sq_selected: tuple = ()
     move = []
+    playerOne = True
+    playerTwo = False
     while running:
-
+        human_turn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
             if e.type == p.QUIT:
                 running = False
             elif e.type == p.MOUSEBUTTONDOWN:
-
-                location = p.mouse.get_pos()
-                col = location[0] // SQ_SIZE
-                row = location[1] // SQ_SIZE
-                if sq_selected == (row, col):
-                    sq_selected = ()
-                    move = []
-
-                else:
-                    sq_selected = (row, col)
-                    if len(move) == 0:
-                        if gs.board[row][col] != "--":
-                            move.append(sq_selected)
-                    else:
-                        move.append(sq_selected)
-                if len(move) == 2:
-                    mv = ChessEngine.movePieces(gs.board, move[0], move[1])
-
-                    # print(possible_moves)
-                    if mv in valid_moves:
-                        gs.make_move(mv)
-                        move_made = True
+                if human_turn:
+                    location = p.mouse.get_pos()
+                    col = location[0] // SQ_SIZE
+                    row = location[1] // SQ_SIZE
+                    if sq_selected == (row, col):
                         sq_selected = ()
                         move = []
-                        # print(gs.checkMate)
-                    else:
-                        move = [sq_selected]
 
+                    else:
+                        sq_selected = (row, col)
+                        if len(move) == 0:
+                            if gs.board[row][col] != "--":
+                                move.append(sq_selected)
+                        else:
+                            move.append(sq_selected)
+                    if len(move) == 2:
+                        mv = ChessEngine.movePieces(gs.board, move[0], move[1])
+
+                        # print(possible_moves)
+                        if mv in valid_moves:
+                            gs.make_move(mv)
+                            move_made = True
+                            sq_selected = ()
+                            move = []
+                            # print(gs.checkMate)
+                        else:
+                            move = [sq_selected]
+        if not human_turn:
+            ai_move = ChessAI.findBestMoveMinMax(gs, valid_moves)
+            if ai_move is None:
+                ai_move = ChessAI.findRandomMove(valid_moves)
+            gs.make_move(ai_move)
+            move_made = True
         if move_made:
             valid_moves = gs.allValidMoves()
 
