@@ -1,6 +1,6 @@
 import pygame as p
-from Chess import ChessEngine
-from Chess import ChessAI
+import ChessEngine
+import ChessAI
 p.init()
 WIDTH = HEIGHT = 512
 DIMENSIONS = 8
@@ -29,7 +29,7 @@ def main():
     sq_selected: tuple = ()
     move = []
     playerOne = True
-    playerTwo = False
+    playerTwo = True
     while running:
         human_turn = (gs.whiteToMove and playerOne) or (not gs.whiteToMove and playerTwo)
         for e in p.event.get():
